@@ -27,7 +27,6 @@ io.on('connection', (socket) => {
             console.log(`Se ha creado la sala: ${roomName}`);
         }
 
-        // Verificar si la sala está llena
         if (rooms[roomName].players.length > MAX_PLAYERS_PER_ROOM) {
             socket.emit('lobbyFull');
             socket.disconnect(true);
@@ -43,26 +42,25 @@ io.on('connection', (socket) => {
         rooms[roomName].players.push({ id: socket.id, posx: initialCoordinates.x, posy: initialCoordinates.y, velocityx: 0, velocityy: 0, animation: null });
 
         socket.emit('initialCoordinates', initialCoordinates);
-        
         socket.emit('firstPlayer', rooms[roomName].players.length === 1);
-        socket.emit('playerNumber', rooms[roomName].players.length);
+        socket.emit('playerNumber', rooms[roomName].players.length, roomName);
 
         // Emitir a todos los jugadores en la sala para actualizar la lista de jugadores
         io.to(roomName).emit('updatePlayers', rooms[roomName].players.map(player => player.id));
     });
 
    socket.on('updatePlayers', (data) => {
-    if (rooms[roomName] && rooms[roomName].players) { // Verificar si rooms[roomName] y rooms[roomName].players están definidos
-        const index = rooms[roomName].players.findIndex(player => player.id === socket.id);
+    if (rooms[data.code] && rooms[data.code].players) { // Verificar si rooms[roomName] y rooms[roomName].players están definidos
+        const index = rooms[data.code].players.findIndex(player => player.id === socket.id);
         if (index !== -1) {
-            rooms[roomName].players[index].posx = data.posx;
-            rooms[roomName].players[index].posy = data.posy;
-            rooms[roomName].players[index].velocityx = data.velocityx;
-            rooms[roomName].players[index].velocityy = data.velocityy;
-            rooms[roomName].players[index].animation = data.animation; 
-            rooms[roomName].players[index].key = data.key;
+            rooms[data.code].players[index].posx = data.posx;
+            rooms[data.code].players[index].posy = data.posy;
+            rooms[data.code].players[index].velocityx = data.velocityx;
+            rooms[data.code].players[index].velocityy = data.velocityy;
+            rooms[data.code].players[index].animation = data.animation; 
+            rooms[data.code].players[index].key = data.key;
         }
-        io.to(roomName).emit('updatePlayers', rooms[roomName].players); 
+        io.to(data.code).emit('updatePlayers', rooms[data.code].players); 
     }
 });
 
