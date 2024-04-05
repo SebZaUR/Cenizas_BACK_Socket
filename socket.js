@@ -1,7 +1,5 @@
 const MAX_PLAYERS_PER_ROOM = 5;
 const rooms = {};
-const connectedPlayers = {};
-const players = [];
 
 const app = require('express')();
 const http = require('http').createServer(app);
@@ -64,17 +62,20 @@ io.on('connection', (socket) => {
     }
 });
 
+socket.on('updateSkeleton', (skeletonData) => {
+    skeletonState = skeletonData;
+    io.to(skeletonData.code).emit('updateSkeleton', skeletonData);
+});
+
 socket.on('goToDesert', (data) => {
     io.to(roomName).emit('goToDesert', data); 
 });
 
 socket.on('disconnect', () => {
-    // Buscar el jugador en todas las salas y eliminarlo si se encuentra
     for (const roomName in rooms) {
         const index = rooms[roomName].players.findIndex(player => player.id === socket.id);
         if (index !== -1) {
             rooms[roomName].players.splice(index, 1);
-            // Emitir evento solo a la sala específica para notificar a los jugadores
             io.to(roomName).emit('playerDisconnected', socket.id);
             break; // Romper el bucle una vez que se haya encontrado al jugador
         }
