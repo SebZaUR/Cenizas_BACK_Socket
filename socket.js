@@ -50,7 +50,7 @@ const io = require('socket.io')(http, {
     });
 
     socket.on('updateSkeleton', (skeletonData) => {
-        skeletonState = skeletonData;
+        const skeletonState = skeletonData;
         io.emit('updateSkeleton', skeletonData);
     });
 
