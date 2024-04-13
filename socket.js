@@ -62,12 +62,8 @@ io.on('connection', (socket) => {
     }
 });
 
-    socket.on('updateSkeleton', (skeletonData) => {
-        const skeletonState = skeletonData;
-        io.emit('updateSkeleton', skeletonData);
-    });
 socket.on('updateSkeleton', (skeletonData) => {
-    skeletonState = skeletonData;
+    const skeletonState = skeletonData;
     io.to(skeletonData.code).emit('updateSkeleton', skeletonData);
 });
 
