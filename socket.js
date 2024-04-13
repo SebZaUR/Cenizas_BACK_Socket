@@ -63,7 +63,6 @@ io.on('connection', (socket) => {
 });
 
 socket.on('updateSkeleton', (skeletonData) => {
-    const skeletonState = skeletonData;
     io.to(skeletonData.code).emit('updateSkeleton', skeletonData);
 });
 
