@@ -45,6 +45,8 @@ const io = require('socket.io')(http, {
         
     });
 
+    
+
     socket.on('goToDesert', (data) => {
     
     io.to(roomName).emit('goToDesert', data); // Emitir el evento solo a los clientes dentro de la sala
