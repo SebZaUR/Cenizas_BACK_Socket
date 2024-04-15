@@ -57,8 +57,19 @@ io.on('connection', (socket) => {
             rooms[data.code].players[index].velocityy = data.velocityy;
             rooms[data.code].players[index].animation = data.animation; 
             rooms[data.code].players[index].key = data.key;
+
         }
         io.to(data.code).emit('updatePlayers', rooms[data.code].players); 
+    }
+});
+
+socket.on('imHitted', () => {
+    for (const roomName in rooms) {
+        const index = rooms[roomName].players.findIndex(player => player.id === socket.id);
+        if (index !== -1) {
+            io.to(roomName).emit('imHitted', socket.id);
+            break;
+        }
     }
 });
 
@@ -71,16 +82,16 @@ socket.on('goToDesert', (data) => {
     io.to(roomName).emit('goToDesert', data); 
 });
 
-socket.on('disconnect', () => {
-    for (const roomName in rooms) {
-        const index = rooms[roomName].players.findIndex(player => player.id === socket.id);
-        if (index !== -1) {
-            rooms[roomName].players.splice(index, 1);
-            io.to(roomName).emit('playerDisconnected', socket.id);
-            break; // Romper el bucle una vez que se haya encontrado al jugador
+    socket.on('disconnect', () => {
+        for (const roomName in rooms) {
+            const index = rooms[roomName].players.findIndex(player => player.id === socket.id);
+            if (index !== -1) {
+                rooms[roomName].players.splice(index, 1);
+                io.to(roomName).emit('playerDisconnected', socket.id);
+                break; 
+            }
         }
-    }
-});
+    });
 });
 
 http.listen(2525, () => {
