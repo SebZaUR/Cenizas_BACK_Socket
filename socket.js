@@ -77,8 +77,8 @@ socket.on('updateSkeleton', (skeletonData) => {
 socket.on('goToDesert', (data) => {
     const posicionesInicialesEsqueletos = [];
     for (let i = 0; i < 7; i++) {
-        const posX = Math.floor(Math.random() * (800 - 100 + 1)) + 100; // Reemplaza MAX_X y MIN_X con los límites de tu escenario
-        const posY = Math.floor(Math.random() * (900 - 100 + 1)) + 100; // Reemplaza MAX_Y y MIN_Y con los límites de tu escenario
+        const posX = Math.floor(Math.random() * (800 - 100 + 1)) + 100; 
+        const posY = Math.floor(Math.random() * (900 - 100 + 1)) + 100; 
         posicionesInicialesEsqueletos.push({ x: posX, y: posY });
     }
     data.posicionesInicialesEsqueletos = posicionesInicialesEsqueletos;
