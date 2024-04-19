@@ -15,13 +15,9 @@ const io = require('socket.io')(http, {
 
 io.on('connection', (socket) => {
     let roomName;
-    socket.on('joinRoom', (code) => {
-        roomName = code;
-
-        // Verificar si la sala ya existe
     socket.on('joinRoom', ( code ) => {
          roomName = code;
-        
+
         if (!rooms[roomName]) {
             rooms[roomName] = {
                 players: [],
@@ -81,21 +77,16 @@ io.on('connection', (socket) => {
     });
 
     socket.on('goToDesert', (data) => {
-        console.log(data.idOwner)
+        const posicionesInicialesEsqueletos = [];
+        for (let i = 0; i < 7; i++) {
+            const posX = Math.floor(Math.random() * (800 - 100 + 1)) + 100;
+            const posY = Math.floor(Math.random() * (900 - 100 + 1)) + 100;
+            posicionesInicialesEsqueletos.push({ x: posX, y: posY });
+        }
+        data.posicionesInicialesEsqueletos = posicionesInicialesEsqueletos;
         io.to(data.idOwner).emit('turnOffRoom', roomName)
         io.to(roomName).emit('goToDesert', data);
     });
-socket.on('goToDesert', (data) => {
-    const posicionesInicialesEsqueletos = [];
-    for (let i = 0; i < 7; i++) {
-        const posX = Math.floor(Math.random() * (800 - 100 + 1)) + 100; 
-        const posY = Math.floor(Math.random() * (900 - 100 + 1)) + 100; 
-        posicionesInicialesEsqueletos.push({ x: posX, y: posY });
-    }
-    data.posicionesInicialesEsqueletos = posicionesInicialesEsqueletos;
-    io.to(data.idOwner).emit('turnOffRoom', roomName)
-    io.to(roomName).emit('goToDesert', data);
-});
 
     socket.on('disconnect', () => {
         for (const roomName in rooms) {
@@ -109,29 +100,29 @@ socket.on('goToDesert', (data) => {
     });
     socket.on('sendFriendRequest', (data) => {
         console.log(`El usuario con correo electrónico ${data.send} envio una solicitud.`);
-        if(playersConect[data.reciever]){
+        if (playersConect[data.reciever]) {
             setTimeout(() => {
                 io.to(playersConect[data.reciever]).emit('friendRequestReceived', data.send);
-            }, 2000); 
+            }, 2000);
         }
     });
 
-    socket.on('respondRequest',(data) => {
+    socket.on('respondRequest', (data) => {
         console.log(`El usuario con correo electrónico ${data.reciever} responde a solicitud de ${data.send} : ${data.respond}`);
-        if(playersConect[data.reciever]){
+        if (playersConect[data.reciever]) {
             setTimeout(() => {
                 io.to(playersConect[data.send]).emit('friendRequestRespond', data.respond);
-            }, 2000); 
+            }, 2000);
         }
     })
-    
-    socket.on('registPlayer',(data)=> {
+
+    socket.on('registPlayer', (data) => {
         // Verificar si el jugador esta registrado
         if (!playersConect[data.user]) {
             playersConect[data.user] = data.id;
             console.log(`Se ha registrado el jugador ${data.user}`);
-        }else{
-            if(playersConect[data.user] != data.id){
+        } else {
+            if (playersConect[data.user] != data.id) {
                 playersConect[data.user] = data.id;
             }
         }
