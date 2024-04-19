@@ -15,9 +15,7 @@ io.on('connection', (socket) => {
     socket.on('joinRoom', ( code ) => {
          roomName = code;
         
-        // Verificar si la sala ya existe
         if (!rooms[roomName]) {
-            // Crear la sala si no existe
             rooms[roomName] = {
                 players: [],
                 skeletonState: { x: 400, y: 400 }
@@ -32,10 +30,8 @@ io.on('connection', (socket) => {
         }
         console.log(rooms[roomName].players.length)
 
-        // Unir al jugador a la sala
         socket.join(roomName);
 
-        // Emitir eventos de inicialización al jugador que se une
         const initialCoordinates = { x: 370 + rooms[roomName].players.length * 30, y: 270 };
         rooms[roomName].players.push({ id: socket.id, posx: initialCoordinates.x, posy: initialCoordinates.y, velocityx: 0, velocityy: 0, animation: null });
 
@@ -78,7 +74,15 @@ socket.on('updateSkeleton', (skeletonData) => {
 });
 
 socket.on('goToDesert', (data) => {
-    io.to(roomName).emit('goToDesert', data); 
+    const posicionesInicialesEsqueletos = [];
+    for (let i = 0; i < 7; i++) {
+        const posX = Math.floor(Math.random() * (800 - 100 + 1)) + 100; 
+        const posY = Math.floor(Math.random() * (900 - 100 + 1)) + 100; 
+        posicionesInicialesEsqueletos.push({ x: posX, y: posY });
+    }
+    data.posicionesInicialesEsqueletos = posicionesInicialesEsqueletos;
+    io.to(roomName).emit('goToDesert', data);
+ 
 });
 
     socket.on('disconnect', () => {
