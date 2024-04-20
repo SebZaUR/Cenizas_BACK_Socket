@@ -31,7 +31,6 @@ io.on('connection', (socket) => {
             socket.disconnect(true);
             return;
         }
-        console.log(rooms[roomName].players.length)
 
         socket.join(roomName);
 
@@ -42,7 +41,6 @@ io.on('connection', (socket) => {
         socket.emit('firstPlayer', rooms[roomName].players.length === 1);
         socket.emit('playerNumber', rooms[roomName].players.length, roomName);
 
-        // Emitir a todos los jugadores en la sala para actualizar la lista de jugadores
         io.to(roomName).emit('updatePlayers', rooms[roomName].players.map(player => player.id));
     });
 
@@ -74,6 +72,14 @@ io.on('connection', (socket) => {
 
     socket.on('updateSkeleton', (skeletonData) => {
         io.to(skeletonData.code).emit('updateSkeleton', skeletonData);
+    });
+
+    socket.on('deadSkeleton', (data) => {
+        io.to(data.code).emit('deadSkeleton', data);
+    });
+
+    socket.on('directionsEnemys', (data) => {
+        io.to(data.code).emit('directionsEnemys', data);
     });
 
     socket.on('goToDesert', (data) => {
