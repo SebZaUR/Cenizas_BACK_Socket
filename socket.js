@@ -6,7 +6,6 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
     cors: {
         origin: "http://localhost:4200",
-        origin: "https://cenizasdelpasado.azurewebsites.net",
         methods: ["GET", "POST"]
     }
 });
@@ -14,11 +13,9 @@ const io = require('socket.io')(http, {
 io.on('connection', (socket) => {
     let roomName;
     socket.on('joinRoom', ( code ) => {
-         roomName = code;
+        roomName = code;
         
-        // Verificar si la sala ya existe
         if (!rooms[roomName]) {
-            // Crear la sala si no existe
             rooms[roomName] = {
                 players: [],
                 skeletonState: { x: 400, y: 400 }
@@ -33,10 +30,8 @@ io.on('connection', (socket) => {
         }
         console.log(rooms[roomName].players.length)
 
-        // Unir al jugador a la sala
         socket.join(roomName);
 
-        // Emitir eventos de inicialización al jugador que se une
         const initialCoordinates = { x: 370 + rooms[roomName].players.length * 30, y: 270 };
         rooms[roomName].players.push({ id: socket.id, posx: initialCoordinates.x, posy: initialCoordinates.y, velocityx: 0, velocityy: 0, animation: null });
 
@@ -48,7 +43,7 @@ io.on('connection', (socket) => {
         io.to(roomName).emit('updatePlayers', rooms[roomName].players.map(player => player.id));
     });
 
-   socket.on('updatePlayers', (data) => {
+socket.on('updatePlayers', (data) => {
     if (rooms[data.code] && rooms[data.code].players) { // Verificar si rooms[roomName] y rooms[roomName].players están definidos
         const index = rooms[data.code].players.findIndex(player => player.id === socket.id);
         if (index !== -1) {
@@ -58,8 +53,19 @@ io.on('connection', (socket) => {
             rooms[data.code].players[index].velocityy = data.velocityy;
             rooms[data.code].players[index].animation = data.animation; 
             rooms[data.code].players[index].key = data.key;
+
         }
         io.to(data.code).emit('updatePlayers', rooms[data.code].players); 
+    }
+});
+
+socket.on('imHitted', () => {
+    for (const roomName in rooms) {
+        const index = rooms[roomName].players.findIndex(player => player.id === socket.id);
+        if (index !== -1) {
+            io.to(roomName).emit('imHitted', socket.id);
+            break;
+        }
     }
 });
 
@@ -69,19 +75,31 @@ socket.on('updateSkeleton', (skeletonData) => {
 });
 
 socket.on('goToDesert', (data) => {
-    io.to(roomName).emit('goToDesert', data); 
+    const posicionesInicialesEsqueletos = [];
+    const posicionesItems = [];
+    for (let i = 0; i < 6; i++) {
+        const posX = Math.floor(Math.random() * (800 - 100 + 1)) + 100; 
+        const posY = Math.floor(Math.random() * (900 - 100 + 1)) + 100;
+        const itemX = Math.floor(Math.random() * (800 - 100 + 1)) + 100;
+        const itemY = Math.floor(Math.random() * (900 - 100 + 1)) + 100;
+        posicionesInicialesEsqueletos.push({ x: posX, y: posY });
+        posicionesItems.push({ x: itemX, y: itemY });
+    }
+    data.posicionesItems = posicionesItems;
+    data.posicionesInicialesEsqueletos = posicionesInicialesEsqueletos;
+    io.to(roomName).emit('goToDesert', data);
 });
 
-socket.on('disconnect', () => {
-    for (const roomName in rooms) {
-        const index = rooms[roomName].players.findIndex(player => player.id === socket.id);
-        if (index !== -1) {
-            rooms[roomName].players.splice(index, 1);
-            io.to(roomName).emit('playerDisconnected', socket.id);
-            break; // Romper el bucle una vez que se haya encontrado al jugador
+    socket.on('disconnect', () => {
+        for (const roomName in rooms) {
+            const index = rooms[roomName].players.findIndex(player => player.id === socket.id);
+            if (index !== -1) {
+                rooms[roomName].players.splice(index, 1);
+                io.to(roomName).emit('playerDisconnected', socket.id);
+                break; 
+            }
         }
-    }
-});
+    });
 });
 
 http.listen(2525, () => {
