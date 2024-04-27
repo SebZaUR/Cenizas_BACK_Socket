@@ -3,6 +3,7 @@ const { emit } = require('process');
 const MAX_PLAYERS_PER_ROOM = 5;
 const rooms = {};
 const playersConect = {};
+const coordenadas = {};
 
 const app = require('express')();
 const http = require('http').createServer(app);
@@ -15,8 +16,8 @@ const io = require('socket.io')(http, {
 
 io.on('connection', (socket) => {
     let roomName;
-    socket.on('joinRoom', ( code ) => {
-      roomName = code;
+    socket.on('joinRoom', (code) => {
+        roomName = code;
         if (!rooms[roomName]) {
             rooms[roomName] = {
                 players: [],
@@ -34,9 +35,10 @@ io.on('connection', (socket) => {
         socket.join(roomName);
 
         const initialCoordinates = { x: 370 + rooms[roomName].players.length * 30, y: 270 };
+        const validCoordinates = {x: 370, y: 370};
         rooms[roomName].players.push({ id: socket.id, posx: initialCoordinates.x, posy: initialCoordinates.y, velocityx: 0, velocityy: 0, animation: null });
 
-        socket.emit('initialCoordinates', initialCoordinates);
+        socket.emit('initialCoordinates', initialCoordinates, validCoordinates);
         socket.emit('firstPlayer', rooms[roomName].players.length === 1);
         socket.emit('playerNumber', rooms[roomName].players.length, roomName);
 
@@ -45,7 +47,7 @@ io.on('connection', (socket) => {
 
 
     socket.on('updatePlayers', (data) => {
-        if (rooms[data.code] && rooms[data.code].players) { // Verificar si rooms[roomName] y rooms[roomName].players están definidos
+        if (rooms[data.code] && rooms[data.code].players) { 
             const index = rooms[data.code].players.findIndex(player => player.id === socket.id);
             if (index !== -1) {
                 rooms[data.code].players[index].posx = data.posx;
@@ -54,27 +56,44 @@ io.on('connection', (socket) => {
                 rooms[data.code].players[index].velocityy = data.velocityy;
                 rooms[data.code].players[index].animation = data.animation;
                 rooms[data.code].players[index].key = data.key;
-
             }
             io.to(data.code).emit('updatePlayers', rooms[data.code].players);
         }
     });
 
-  socket.on('goToDesert', (data) => {
-    const posicionesInicialesEsqueletos = [];
-    const posicionesItems = [];
-    for (let i = 0; i < 6; i++) {
-        const posX = Math.floor(Math.random() * (800 - 100 + 1)) + 100; 
-        const posY = Math.floor(Math.random() * (900 - 100 + 1)) + 100;
-        const itemX = Math.floor(Math.random() * (800 - 100 + 1)) + 100;
-        const itemY = Math.floor(Math.random() * (900 - 100 + 1)) + 100;
-        posicionesInicialesEsqueletos.push({ x: posX, y: posY });
-        posicionesItems.push({ x: itemX, y: itemY });
-    }
-    data.posicionesItems = posicionesItems;
-    data.posicionesInicialesEsqueletos = posicionesInicialesEsqueletos;
-    io.to(roomName).emit('goToDesert', data);
-  });
+    socket.on('goToDesert', (data) => {
+        io.to(roomName).emit('turnOffRoom', roomName);
+        io.to(roomName).emit('goToDesert', data);
+    });
+
+    socket.on('goToCave', (data) => {
+        io.to(roomName).emit('goToCave', data);
+    });
+
+    socket.on ('valueCordinates', (data) =>{
+        const posicionesInicialesEsqueletos = [];
+        const posicionesItems = [];
+        const coordenadas = data.validCoordinates;        
+        
+        function getRandomIndex() {
+            return Math.floor(Math.random() * coordenadas.length);
+        }
+    
+        for (let i = 0; i < 7; i++) {
+            const index = getRandomIndex();
+            posicionesInicialesEsqueletos.push(coordenadas[index]);
+        }
+    
+        for (let i = 0; i < 6; i++) {
+            const index = getRandomIndex();
+            posicionesItems.push(coordenadas[index]);
+        }
+        data.posicionesItems = posicionesItems;
+        data.posicionesInicialesEsqueletos = posicionesInicialesEsqueletos;
+        io.to(roomName).emit('valueCordinates', data);
+
+    });
+
     socket.on('imHitted', () => {
         for (const roomName in rooms) {
             const index = rooms[roomName].players.findIndex(player => player.id === socket.id);
@@ -107,7 +126,7 @@ io.on('connection', (socket) => {
             }
         }
     });
-  
+
     socket.on('sendFriendRequest', (data) => {
         console.log(`El usuario con correo electrónico ${data.send} envio una solicitud.`);
         if (playersConect[data.reciever]) {
